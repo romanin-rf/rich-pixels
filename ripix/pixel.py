@@ -133,7 +133,7 @@ class AsyncPixels:
         resample = resample or Resampling.NEAREST
         
         segments = await AsyncPixels._segments_from_image(image, resize, resample, loop)
-        return AsyncPixels.from_segments(segments)
+        return await AsyncPixels.from_segments(segments)
 
     @staticmethod
     async def from_image_path(
