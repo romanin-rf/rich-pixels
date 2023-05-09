@@ -1,4 +1,4 @@
-# Rich Pixels
+# Ripix
 
 A Rich-compatible library for writing pixel images and other colourful grids to the
 terminal.
@@ -9,10 +9,10 @@ terminal.
 
 ## Installation
 
-Get `rich-pixels` from PyPI.
+Get `ripix` from PyPI.
 
 ```
-pip install rich-pixels
+pip install ripix
 ```
 
 ## Basic Usage
