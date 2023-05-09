@@ -1,16 +1,17 @@
 [tool.poetry]
-name = "rich-pixels"
-version = "2.1.1"
+name = "ripix"
+version = "2.2.0"
 description = "A Rich-compatible library for writing pixel images and ASCII art to the terminal."
-authors = ["Darren Burns <darrenb900@gmail.com>"]
+authors = ["Darren Burns <darrenb900@gmail.com>", "Romanin <semina054@gmail.com>"]
 readme = "README.md"
-packages = [{ include = "rich_pixels" }]
-include = ["rich_pixels/py.typed"]
+packages = [{ include = "ripix" }]
+include = ["ripix/py.typed", "ripix/functions.pyi"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
 rich = ">=12.0.0"
 pillow = "^9.0.0"
+asyncio = "^3.4.3"
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.10.0"

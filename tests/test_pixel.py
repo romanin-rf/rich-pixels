@@ -7,7 +7,7 @@ from rich.segment import Segment
 from rich.style import Style
 from syrupy.extensions.image import SVGImageSnapshotExtension
 
-from rich_pixels import Pixels
+from ripix import Pixels
 
 SAMPLE_DATA_DIR = Path(__file__).parent / ".sample_data/"
 
