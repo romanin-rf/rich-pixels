@@ -24,7 +24,7 @@ pip install ripix
 You can load an image file from a path using `from_image_path`:
 
 ```python
-from rich_pixels import Pixels
+from ripix import Pixels
 from rich.console import Console
 
 console = Console()
@@ -37,7 +37,7 @@ console.print(pixels)
 You can create a PIL image object yourself and pass it in to `from_image`.
 
 ```python
-from rich_pixels import Pixels
+from ripix import Pixels
 from rich.console import Console
 from PIL import Image
 
@@ -57,7 +57,7 @@ You can quickly build shapes using a tool like [asciiflow](https://asciiflow.com
 apply styles the ASCII characters. This provides a quick way of sketching out shapes.
 
 ```python
-from rich_pixels import Pixels
+from ripix import Pixels
 from rich.console import Console
 
 console = Console()
