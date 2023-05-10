@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# My Ignored Type
+*__hidden*
+
 # C extensions
 *.so
 

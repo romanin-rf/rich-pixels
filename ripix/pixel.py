@@ -2,8 +2,6 @@ from __future__ import annotations
 # > Standard Modules
 from pathlib import Path, PurePath
 from typing import Iterable, Mapping, Tuple, Union, Optional, List
-# > Asynchronous
-from asyncio import get_running_loop, AbstractEventLoop
 # > Graphics
 from PIL import Image as PILImageModule
 from PIL.Image import Image
@@ -12,7 +10,7 @@ from rich.console import Console, ConsoleOptions, RenderResult
 from rich.segment import Segment, Segments
 from rich.style import Style
 # > Local Imports
-from .functions import arange, aiter, wrapper_run_in_executor, run_in_executor
+from .functions import arange, aiter
 
 # ! Just Pixels
 class Pixels:
@@ -22,15 +20,18 @@ class Pixels:
     @staticmethod
     def from_image(
         image: Image,
-        resize: Optional[Tuple[int, int]] = None
-    ):
-        segments = Pixels._segments_from_image(image, resize)
+        resize: Optional[Tuple[int, int]] = None,
+        resample: Optional[Resampling] = None
+    ) -> Pixels:
+        resample = resample or Resampling.NEAREST
+        segments = Pixels._segments_from_image(image, resize, resample)
         return Pixels.from_segments(segments)
 
     @staticmethod
     def from_image_path(
         path: Union[PurePath, str],
-        resize: Optional[Tuple[int, int]] = None
+        resize: Optional[Tuple[int, int]] = None,
+        resample: Optional[Resampling] = None
     ) -> Pixels:
         """Create a Pixels object from an image. Requires 'image' extra dependencies.
 
@@ -38,18 +39,21 @@ class Pixels:
             path: The path to the image file.
             resize: A tuple of (width, height) to resize the image to.
         """
+        resample = resample or Resampling.NEAREST
+        
         with PILImageModule.open(Path(path)) as image:
-            segments = Pixels._segments_from_image(image, resize)
+            segments = Pixels._segments_from_image(image, resize, resample)
 
         return Pixels.from_segments(segments)
 
     @staticmethod
     def _segments_from_image(
         image: Image,
-        resize: Optional[Tuple[int, int]] = None
+        resize: Optional[Tuple[int, int]] = None,
+        resample: Optional[Resampling] = None
     ) -> List[Segment]:
-        if resize:
-            image = image.resize(resize, resample=Resampling.NEAREST)
+        resample = resample or Resampling.NEAREST
+        if resize: image = image.resize(resize, resample=resample)
 
         width, height = image.width, image.height
         rgba_image = image.convert("RGBA")
@@ -69,7 +73,6 @@ class Pixels:
 
             row_append(Segment("\n", null_style))
 
-            # TODO: Double-check if this is required - I've forgotten...
             segments += this_row
 
         return segments
@@ -116,7 +119,6 @@ class Pixels:
     ) -> RenderResult:
         yield self._segments or ""
 
-
 # ! Asynchronous Pixels
 class AsyncPixels:
     def __init__(self) -> None:
@@ -126,21 +128,17 @@ class AsyncPixels:
     async def from_image(
         image: Image,
         resize: Optional[Tuple[int, int]] = None,
-        resample: Optional[Resampling] = None,
-        loop: Optional[AbstractEventLoop] = None
+        resample: Optional[Resampling] = None
     ) -> AsyncPixels:
-        if loop is None: loop = get_running_loop()
         resample = resample or Resampling.NEAREST
-        
-        segments = await AsyncPixels._segments_from_image(image, resize, resample, loop)
+        segments = await AsyncPixels._segments_from_image(image, resize, resample)
         return await AsyncPixels.from_segments(segments)
 
     @staticmethod
     async def from_image_path(
         path: Union[PurePath, str],
         resize: Optional[Tuple[int, int]] = None,
-        resample: Optional[Resampling] = None,
-        loop: Optional[AbstractEventLoop] = None
+        resample: Optional[Resampling] = None
     ) -> AsyncPixels:
         """Create a Pixels object from an image. Requires 'image' extra dependencies.
 
@@ -150,11 +148,8 @@ class AsyncPixels:
         """
         resample = resample or Resampling.NEAREST
         
-        if loop is None: loop = get_running_loop()
-        pilopen = wrapper_run_in_executor(loop, None, PILImageModule.open)
-        
-        with await pilopen(Path(path)) as image:
-            segments = await AsyncPixels._segments_from_image(image, resize, resample, loop)
+        with PILImageModule.open(Path(path)) as image:
+            segments = await AsyncPixels._segments_from_image(image, resize, resample)
 
         return await AsyncPixels.from_segments(segments)
     
@@ -162,32 +157,25 @@ class AsyncPixels:
     async def _segments_from_image(
         image: Image,
         resize: Optional[Tuple[int, int]] = None,
-        resize_resample: Optional[Resampling] = None,
-        loop: Optional[AbstractEventLoop] = None
+        resize_resample: Optional[Resampling] = None
     ) -> List[Segment]:
         resample = resize_resample or Resampling.NEAREST
-        if loop is None: loop = get_running_loop()
-        if resize is not None: image = await run_in_executor(loop, None, image.resize, resize, resample=resample)
+        if resize is not None: image = image.resize(resize, resample=resample)
 
         width, height = image.width, image.height
-        rgba_image = await run_in_executor(loop, None, image.convert, "RGBA") if image.mode != "RGBA" else image
-        get_pixel = wrapper_run_in_executor(loop, None, rgba_image.getpixel)
-        parse_style = wrapper_run_in_executor(loop, None, Style.parse)
+        rgba_image = image.convert("RGBA")
         null_style = Style.null()
         segments = []
 
         async for y in arange(height):
-            this_row: List[Segment] = []
-            row_append = this_row.append
-
+            this_row = []
             async for x in arange(width):
-                r, g, b, a = await get_pixel((x, y))
-                style = await parse_style(f"on rgb({r},{g},{b})") if (a > 0) else null_style
-                row_append(Segment(" ", style))
-            row_append(Segment("\n", null_style))
-            
+                r, g, b, a = rgba_image.getpixel((x, y))
+                style = Style.parse(f"on rgb({r},{g},{b})") if (a > 0) else null_style
+                this_row.append(Segment(" ", style))
+            this_row.append(Segment("\n", null_style))
             segments += this_row
-
+        
         return segments
 
     @staticmethod
@@ -231,6 +219,7 @@ class AsyncPixels:
         self, console: Console, options: ConsoleOptions
     ) -> RenderResult:
         yield self._segments or ""
+
 
 # * Start
 if __name__ == "__main__":
