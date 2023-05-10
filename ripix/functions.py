@@ -1,5 +1,4 @@
 import asyncio
-from functools import partial
 
 async def aiter(it):
     for item in it:
@@ -13,7 +12,7 @@ async def arange(*args, **kwargs) -> int:
 
 async def run_in_executor(loop, executor, func, *args, **kwargs):
     if loop is None: loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(executor, partial(func, *args, **kwargs))
+    return await loop.run_in_executor(executor, lambda: func(*args, **kwargs))
 
 def wrapper_run_in_executor(loop, executor, func):
     async def wrapped_func(*args, **kwargs):
