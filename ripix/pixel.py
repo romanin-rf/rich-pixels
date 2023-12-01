@@ -60,7 +60,7 @@ class Pixels:
             for x in range(height):
                 r, g, b, a = image.getpixel((x, y))
                 style = Style.parse(f"on rgb({r},{g},{b})") if a > 0 else null_style
-                this_row.append(Segment(style))
+                this_row.append(Segment(" ", style))
             this_row.append(Segment("\n", null_style))
             segments += this_row
         return segments
@@ -153,7 +153,7 @@ class AsyncPixels:
             for x in range(height):
                 r, g, b, a = image.getpixel((x, y))
                 style = Style.parse(f"on rgb({r},{g},{b})") if a > 0 else null_style
-                this_row.append(Segment(style))
+                this_row.append(Segment(" ", style))
             this_row.append(Segment("\n", null_style))
             segments += this_row
         return segments
